@@ -1,131 +1,142 @@
 import serial
 import time
-from datetime import datetime
 import sys
+from Utils.DateUtils import DateUtils
 
-# LED display rule. Normal Off.
-DISPLAY_RULE_NORMALLY_OFF = 0
+from features.Sensor.Entity.SensorData import SensorData
 
-# LED display rule. Normal On.
-DISPLAY_RULE_NORMALLY_ON = 1
+class SensorApi:
+    # LED display rule. Normal Off.
+    DISPLAY_RULE_NORMALLY_OFF = 0
 
-def s16(value:int) -> int:
-    return -(value & 0x8000) | (value & 0x7fff)
+    # LED display rule. Normal On.
+    DISPLAY_RULE_NORMALLY_ON = 1
 
-def calc_crc(buf:bytearray, length:int) -> bytearray:
-    """
-    CRC-16 calculation.
+    def s16(self,value:int) -> int:
+        return -(value & 0x8000) | (value & 0x7fff)
 
-    """
-    crc = 0xFFFF
-    for i in range(length):
-        crc = crc ^ buf[i]
-        for i in range(8):
-            carrayFlag = crc & 1
-            crc = crc >> 1
-            if (carrayFlag == 1):
-                crc = crc ^ 0xA001
-    crcH = crc >> 8
-    crcL = crc & 0x00FF
+    def calc_crc(self,buf:bytearray, length:int) -> bytearray:
+        """
+        CRC-16 calculation.
 
-    return (bytearray([crcL, crcH]))
+        """
+        crc = 0xFFFF
+        for i in range(length):
+            crc = crc ^ buf[i]
+            for i in range(8):
+                carrayFlag = crc & 1
+                crc = crc >> 1
+                if (carrayFlag == 1):
+                    crc = crc ^ 0xA001
+        crcH = crc >> 8
+        crcL = crc & 0x00FF
 
-
-def print_latest_data(data:bytes):
-    """
-    print measured latest value.
-    """
-    time_measured = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
-    temperature = str( s16(int(hex(data[9]) + '{:02x}'.format(data[8], 'x'), 16)) / 100)
-    relative_humidity = str(int(hex(data[11]) + '{:02x}'.format(data[10], 'x'), 16) / 100)
-    ambient_light = str(int(hex(data[13]) + '{:02x}'.format(data[12], 'x'), 16))
-    barometric_pressure = str(int(hex(data[17]) + '{:02x}'.format(data[16], 'x')
-                                  + '{:02x}'.format(data[15], 'x') + '{:02x}'.format(data[14], 'x'), 16) / 1000)
-    sound_noise = str(int(hex(data[19]) + '{:02x}'.format(data[18], 'x'), 16) / 100)
-    eTVOC = str(int(hex(data[21]) + '{:02x}'.format(data[20], 'x'), 16))
-    eCO2 = str(int(hex(data[23]) + '{:02x}'.format(data[22], 'x'), 16))
-    discomfort_index = str(int(hex(data[25]) + '{:02x}'.format(data[24], 'x'), 16) / 100)
-    heat_stroke = str(s16(int(hex(data[27]) + '{:02x}'.format(data[26], 'x'), 16)) / 100)
-    vibration_information = str(int(hex(data[28]), 16))
-    si_value = str(int(hex(data[30]) + '{:02x}'.format(data[29], 'x'), 16) / 10)
-    pga = str(int(hex(data[32]) + '{:02x}'.format(data[31], 'x'), 16) / 10)
-    seismic_intensity = str(int(hex(data[34]) + '{:02x}'.format(data[33], 'x'), 16) / 1000)
-    temperature_flag = str(int(hex(data[36]) + '{:02x}'.format(data[35], 'x'), 16))
-    relative_humidity_flag = str(int(hex(data[38]) + '{:02x}'.format(data[37], 'x'), 16))
-    ambient_light_flag = str(int(hex(data[40]) + '{:02x}'.format(data[39], 'x'), 16))
-    barometric_pressure_flag = str(int(hex(data[42]) + '{:02x}'.format(data[41], 'x'), 16))
-    sound_noise_flag = str(int(hex(data[44]) + '{:02x}'.format(data[43], 'x'), 16))
-    etvoc_flag = str(int(hex(data[46]) + '{:02x}'.format(data[45], 'x'), 16))
-    eco2_flag = str(int(hex(data[48]) + '{:02x}'.format(data[47], 'x'), 16))
-    discomfort_index_flag = str(int(hex(data[50]) + '{:02x}'.format(data[49], 'x'), 16))
-    heat_stroke_flag = str(int(hex(data[52]) + '{:02x}'.format(data[51], 'x'), 16))
-    si_value_flag = str(int(hex(data[53]), 16))
-    pga_flag = str(int(hex(data[54]), 16))
-    seismic_intensity_flag = str(int(hex(data[55]), 16))
-    print("")
-    print("Time measured:" + time_measured)
-    print("Temperature:" + temperature)
-    print("Relative humidity:" + relative_humidity)
-    print("Ambient light:" + ambient_light)
-    print("Barometric pressure:" + barometric_pressure)
-    print("Sound noise:" + sound_noise)
-    print("eTVOC:" + eTVOC)
-    print("eCO2:" + eCO2)
-    print("Discomfort index:" + discomfort_index)
-    print("Heat stroke:" + heat_stroke)
-    print("Vibration information:" + vibration_information)
-    print("SI value:" + si_value)
-    print("PGA:" + pga)
-    print("Seismic intensity:" + seismic_intensity)
-    print("Temperature flag:" + temperature_flag)
-    print("Relative humidity flag:" + relative_humidity_flag)
-    print("Ambient light flag:" + ambient_light_flag)
-    print("Barometric pressure flag:" + barometric_pressure_flag)
-    print("Sound noise flag:" + sound_noise_flag)
-    print("eTVOC flag:" + etvoc_flag)
-    print("eCO2 flag:" + eco2_flag)
-    print("Discomfort index flag:" + discomfort_index_flag)
-    print("Heat stroke flag:" + heat_stroke_flag)
-    print("SI value flag:" + si_value_flag)
-    print("PGA flag:" + pga_flag)
-    print("Seismic intensity flag:" + seismic_intensity_flag)
+        return (bytearray([crcL, crcH]))
 
 
-def now_utc_str() -> str:
-    """
-    Get now utc.
-    """
-    return datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    def print_latest_data(self,data:bytes) -> SensorData:
+        """
+        print measured latest value.
+        """
+        time_measured = DateUtils.now_utc_str()
+        temperature = self.s16(int(hex(data[9]) + '{:02x}'.format(data[8], 'x'), 16)) / 100
+        relative_humidity = int(hex(data[11]) + '{:02x}'.format(data[10], 'x'), 16) / 100
+        ambient_light = int(hex(data[13]) + '{:02x}'.format(data[12], 'x'), 16)
+        barometric_pressure = int(hex(data[17]) + '{:02x}'.format(data[16], 'x') + '{:02x}'.format(data[15], 'x') + '{:02x}'.format(data[14], 'x'), 16) / 1000
+        sound_noise = int(hex(data[19]) + '{:02x}'.format(data[18], 'x'), 16) / 100
+        eTVOC = int(hex(data[21]) + '{:02x}'.format(data[20], 'x'), 16)
+        eCO2 = int(hex(data[23]) + '{:02x}'.format(data[22], 'x'), 16)
+        discomfort_index = int(hex(data[25]) + '{:02x}'.format(data[24], 'x'), 16) / 100
+        heat_stroke = self.s16(int(hex(data[27]) + '{:02x}'.format(data[26], 'x'), 16)) / 100
+        vibration_information = int(hex(data[28]), 16)
+        si_value = int(hex(data[30]) + '{:02x}'.format(data[29], 'x'), 16) / 10
+        pga = int(hex(data[32]) + '{:02x}'.format(data[31], 'x'), 16) / 10
+        seismic_intensity = int(hex(data[34]) + '{:02x}'.format(data[33], 'x'), 16) / 1000
+        temperature_flag = int(hex(data[36]) + '{:02x}'.format(data[35], 'x'), 16)
+        relative_humidity_flag = int(hex(data[38]) + '{:02x}'.format(data[37], 'x'), 16)
+        ambient_light_flag = int(hex(data[40]) + '{:02x}'.format(data[39], 'x'), 16)
+        barometric_pressure_flag = int(hex(data[42]) + '{:02x}'.format(data[41], 'x'), 16)
+        sound_noise_flag = int(hex(data[44]) + '{:02x}'.format(data[43], 'x'), 16)
+        etvoc_flag = int(hex(data[46]) + '{:02x}'.format(data[45], 'x'), 16)
+        eco2_flag = int(hex(data[48]) + '{:02x}'.format(data[47], 'x'), 16)
+        discomfort_index_flag = int(hex(data[50]) + '{:02x}'.format(data[49], 'x'), 16)
+        heat_stroke_flag = int(hex(data[52]) + '{:02x}'.format(data[51], 'x'), 16)
+        si_value_flag = int(hex(data[53]), 16)
+        pga_flag = int(hex(data[54]), 16)
+        seismic_intensity_flag = int(hex(data[55]), 16)
 
+        return SensorData(
+            time_measured=time_measured,
+            temperature=temperature,
+            relative_humidity=relative_humidity,
+            ambient_light=ambient_light,
+            barometric_pressure=barometric_pressure,
+            sound_noise=sound_noise,
+            eTVOC=eTVOC,
+            eCO2=eCO2,
+            discomfort_index=discomfort_index,
+            heat_stroke=heat_stroke,
+            vibration_information=vibration_information,
+            si_value=si_value,
+            pga=pga,
+            seismic_intensity=seismic_intensity,
+            temperature_flag=temperature_flag,
+            relative_humidity_flag=relative_humidity_flag,
+            ambient_light_flag=ambient_light_flag,
+            barometric_pressure_flag=barometric_pressure_flag,
+            sound_noise_flag=sound_noise_flag,
+            etvoc_flag=etvoc_flag,
+            eco2_flag=eco2_flag,
+            discomfort_index_flag=discomfort_index_flag,
+            heat_stroke_flag=heat_stroke_flag,
+            si_value_flag=si_value_flag,
+            pga_flag=pga_flag,
+            seismic_intensity_flag=seismic_intensity_flag
+        )
+    
 
-if __name__ == '__main__':
-
-    # Serial.
-    ser : serial.Serial = serial.Serial("/dev/ttyUSB0", 115200, serial.EIGHTBITS, serial.PARITY_NONE)
-
-    try:
+    def set_led(self, ser:serial.Serial , r:int, g:int, b:int) -> None:
         # LED On. Color of Green.
-        command = bytearray([0x52, 0x42, 0x0a, 0x00, 0x02, 0x11, 0x51, DISPLAY_RULE_NORMALLY_ON, 0x00, 0, 255, 0])
-        command = command + calc_crc(command, len(command))
+        command = bytearray([0x52, 0x42, 0x0a, 0x00, 0x02, 0x11, 0x51, self.DISPLAY_RULE_NORMALLY_ON, 0x00, r, g, b])
+        command = command + self.calc_crc(command, len(command))
         ser.write(command)
         time.sleep(0.1)
-        ret = ser.read(ser.in_waiting)
+        ser.read(ser.in_waiting)
 
-        while ser.is_open:
-            # Get Latest data Long.
-            command = bytearray([0x52, 0x42, 0x05, 0x00, 0x01, 0x21, 0x50])
-            command = command + calc_crc(command, len(command))
-            tmp = ser.write(command)
-            time.sleep(0.1)
-            data = ser.read(ser.in_waiting)
-            print_latest_data(data)
-            time.sleep(1)
-
-    except KeyboardInterrupt:
+    def clear_led(self, ser:serial.Serial) -> None:
         # LED Off.
-        command = bytearray([0x52, 0x42, 0x0a, 0x00, 0x02, 0x11, 0x51, DISPLAY_RULE_NORMALLY_OFF, 0x00, 0, 0, 0])
-        command = command + calc_crc(command, len(command))
+        command = bytearray([0x52, 0x42, 0x0a, 0x00, 0x02, 0x11, 0x51, self.DISPLAY_RULE_NORMALLY_OFF, 0x00, 0, 0, 0])
+        command = command + self.calc_crc(command, len(command))
         ser.write(command)
         time.sleep(1)
-        # script finish.
-        sys.exit
+    
+
+    def get_sensor_data(self) -> SensorData:
+        """
+        Get sensor data.
+        """
+        # Serial.
+        ser : serial.Serial = serial.Serial("/dev/ttyUSB0", 115200, serial.EIGHTBITS, serial.PARITY_NONE)
+
+        try:
+            # 緑に光らせる
+            self.set_led(
+                ser=ser,
+                r=0,
+                g=255,
+                b=0
+            )
+
+            # Get Latest data Long.
+            command = bytearray([0x52, 0x42, 0x05, 0x00, 0x01, 0x21, 0x50])
+            command = command + self.calc_crc(command, len(command))
+            ser.write(command)
+            time.sleep(0.1)
+            data = ser.read(ser.in_waiting)
+            return self.print_latest_data(data)
+
+        except KeyboardInterrupt:
+            self.clear_led(ser)
+            # script finish.
+            sys.exit
+            return SensorData()
