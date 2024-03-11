@@ -38,7 +38,7 @@ class SensorApi:
         """
         print measured latest value.
         """
-        time_measured = DateUtils.now_utc_str()
+        time_measured = str(DateUtils.now_timestamp())
         temperature = self.s16(int(hex(data[9]) + '{:02x}'.format(data[8], 'x'), 16)) / 100
         relative_humidity = int(hex(data[11]) + '{:02x}'.format(data[10], 'x'), 16) / 100
         ambient_light = int(hex(data[13]) + '{:02x}'.format(data[12], 'x'), 16)

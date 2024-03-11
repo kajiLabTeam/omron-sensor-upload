@@ -1,9 +1,8 @@
 import dataclasses
-from Utils.DateUtils import DateUtils
 
 @dataclasses.dataclass
 class SensorData:
-    time_measured: str = DateUtils.now_utc_str()
+    time_measured: str = ""
     temperature: float = 0.0
     relative_humidity: float = 0.0
     ambient_light: int = 0
