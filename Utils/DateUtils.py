@@ -10,7 +10,7 @@ class DateUtils:
         """
         Get now utc.
         """
-        return datetime.utcnow().strftime("%Y/%m/%d-%H:%M:%S")
+        return datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
     
     @staticmethod
     def now_timestamp() -> int:
