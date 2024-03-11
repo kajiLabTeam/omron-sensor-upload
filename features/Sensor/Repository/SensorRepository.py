@@ -16,6 +16,13 @@ class SensorRepository:
         self.csvFileStorage = csvFileStorage
 
     def get_sensor(self) -> None:
+
+        self.sensorApi.set_led(
+            r=0,
+            g=255,
+            b=0
+        )
+
         while True:
             data = self.sensorApi.get_sensor_data()
             self.csvFileStorage.save(data.to_csv())

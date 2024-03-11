@@ -106,19 +106,19 @@ class SensorApi:
         )
     
 
-    def set_led(self, ser:serial.Serial , r:int, g:int, b:int) -> None:
+    def set_led(self, r:int, g:int, b:int) -> None:
         # LED On. Color of Green.
         command = bytearray([0x52, 0x42, 0x0a, 0x00, 0x02, 0x11, 0x51, self.DISPLAY_RULE_NORMALLY_ON, 0x00, r, g, b])
         command = command + self.calc_crc(command, len(command))
-        ser.write(command)
+        self.ser.write(command)
         time.sleep(0.1)
-        ser.read(ser.in_waiting)
+        self.ser.read(self.ser.in_waiting)
 
-    def clear_led(self, ser:serial.Serial) -> None:
+    def clear_led(self) -> None:
         # LED Off.
         command = bytearray([0x52, 0x42, 0x0a, 0x00, 0x02, 0x11, 0x51, self.DISPLAY_RULE_NORMALLY_OFF, 0x00, 0, 0, 0])
         command = command + self.calc_crc(command, len(command))
-        ser.write(command)
+        self.ser.write(command)
         time.sleep(1)
     
 
@@ -127,13 +127,6 @@ class SensorApi:
         Get sensor data.
         """
         try:
-            # 緑に光らせる
-            self.set_led(
-                ser=self.ser,
-                r=0,
-                g=255,
-                b=0
-            )
             if self.ser.is_open:
                 # Get Latest data Long.
                 command = bytearray([0x52, 0x42, 0x05, 0x00, 0x01, 0x21, 0x50])
@@ -147,7 +140,7 @@ class SensorApi:
                 return SensorData()
 
         except KeyboardInterrupt:
-            self.clear_led(self.ser)
+            self.clear_led()
             # script finish.
             sys.exit
             return SensorData()
