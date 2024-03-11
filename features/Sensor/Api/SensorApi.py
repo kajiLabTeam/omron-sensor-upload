@@ -6,6 +6,11 @@ from Utils.DateUtils import DateUtils
 from features.Sensor.Entity.SensorData import SensorData
 
 class SensorApi:
+
+    def __init__(self):
+        self.ser : serial.Serial = serial.Serial("/dev/ttyUSB0", 115200, serial.EIGHTBITS, serial.PARITY_NONE)
+
+
     # LED display rule. Normal Off.
     DISPLAY_RULE_NORMALLY_OFF = 0
 
@@ -121,28 +126,28 @@ class SensorApi:
         """
         Get sensor data.
         """
-        # Serial.
-        ser : serial.Serial = serial.Serial("/dev/ttyUSB0", 115200, serial.EIGHTBITS, serial.PARITY_NONE)
-
         try:
             # 緑に光らせる
             self.set_led(
-                ser=ser,
+                ser=self.ser,
                 r=0,
                 g=255,
                 b=0
             )
-
-            # Get Latest data Long.
-            command = bytearray([0x52, 0x42, 0x05, 0x00, 0x01, 0x21, 0x50])
-            command = command + self.calc_crc(command, len(command))
-            ser.write(command)
-            time.sleep(0.1)
-            data = ser.read(ser.in_waiting)
-            return self.print_latest_data(data)
+            if self.ser.is_open:
+                # Get Latest data Long.
+                command = bytearray([0x52, 0x42, 0x05, 0x00, 0x01, 0x21, 0x50])
+                command = command + self.calc_crc(command, len(command))
+                self.ser.write(command)
+                time.sleep(0.1)
+                data = self.ser.read(self.ser.in_waiting)
+                return self.print_latest_data(data)
+            else:
+                print("Serial port is not open.")
+                return SensorData()
 
         except KeyboardInterrupt:
-            self.clear_led(ser)
+            self.clear_led(self.ser)
             # script finish.
             sys.exit
             return SensorData()
