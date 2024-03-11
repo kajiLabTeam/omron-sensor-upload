@@ -109,15 +109,15 @@ if __name__ == '__main__':
         command = command + calc_crc(command, len(command))
         ser.write(command)
         time.sleep(0.1)
-        ret = ser.read(ser.inWaiting())
+        ret = ser.read(ser.in_waiting)
 
-        while ser.isOpen():
+        while ser.is_open:
             # Get Latest data Long.
             command = bytearray([0x52, 0x42, 0x05, 0x00, 0x01, 0x21, 0x50])
             command = command + calc_crc(command, len(command))
             tmp = ser.write(command)
             time.sleep(0.1)
-            data = ser.read(ser.inWaiting())
+            data = ser.read(ser.in_waiting)
             print_latest_data(data)
             time.sleep(1)
 
