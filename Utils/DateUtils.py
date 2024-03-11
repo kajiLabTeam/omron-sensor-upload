@@ -13,6 +13,13 @@ class DateUtils:
         return datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
     
     @staticmethod
+    def now_utc() -> datetime:
+        """
+        Get now utc.
+        """
+        return datetime.utcnow()
+    
+    @staticmethod
     def now_timestamp() -> int:
         """
         Get now timestamp.
