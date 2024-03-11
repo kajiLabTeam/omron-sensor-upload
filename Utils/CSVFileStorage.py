@@ -12,7 +12,7 @@ class CSVFileStorage:
 
 
     def save(self, data:str):
-        with open(self.filepath, 'w') as f:
+        with open(self.filepath, 'a') as f:
             f.write(data)
 
     def load(self):
