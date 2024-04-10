@@ -15,7 +15,7 @@ class SensorRepository:
         httpApi: HttpApi = HttpApi()
     ):
         self.sensorApi = sensorApi
-        self.csvFileStorage = csvFileStorage
+        # self.csvFileStorage = csvFileStorage
         self.httpApi = httpApi
         self.new_file_created = False
 
@@ -29,9 +29,11 @@ class SensorRepository:
 
         while True:
             data = self.sensorApi.get_sensor_data()
-            self.csvFileStorage.save(data.to_csv())
+            # TODO: area_idをセットする
+            data.area_id = 1 
+            # self.csvFileStorage.save(data.to_csv())
             self.httpApi.post(data)
-            time.sleep(60)
+            time.sleep(1)
 
             # # 新しいファイルを作成するかどうかの判定
             # current_minute = DateUtils.now_utc().minute
