@@ -30,6 +30,8 @@ class SensorRepository:
         while True:
             data = self.sensorApi.get_sensor_data()
             # self.csvFileStorage.save(data.to_csv())
+            # TODO: area_idをセットする
+            data.area_id = 1 
             self.httpApi.post(data)
             time.sleep(1)
 

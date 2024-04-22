@@ -40,6 +40,7 @@ class SensorData:
     
     def to_json(self) -> Dict[str, Any]:
         return {
+            "area_id": self.area_id,
             "time_measured": self.time_measured,
             "area_id": self.area_id,
             "temperature": self.temperature,
