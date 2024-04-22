@@ -78,6 +78,7 @@ class SensorApi:
 
         return SensorData(
             time_measured=time_measured,
+            area_id=1,
             temperature=temperature,
             relative_humidity=relative_humidity,
             ambient_light=ambient_light,

@@ -11,11 +11,11 @@ class SensorRepository:
     def __init__(
         self,
         sensorApi: SensorApi = SensorApi(),
-        csvFileStorage: CSVFileStorage = CSVFileStorage(DateUtils.now_utc_str() + ".csv", SensorData.get_header()),
+        # csvFileStorage: CSVFileStorage = CSVFileStorage(DateUtils.now_utc_str() + ".csv", SensorData.get_header()),
         httpApi: HttpApi = HttpApi()
     ):
         self.sensorApi = sensorApi
-        self.csvFileStorage = csvFileStorage
+        # self.csvFileStorage = csvFileStorage
         self.httpApi = httpApi
         self.new_file_created = False
 
@@ -29,9 +29,9 @@ class SensorRepository:
 
         while True:
             data = self.sensorApi.get_sensor_data()
-            self.csvFileStorage.save(data.to_csv())
+            # self.csvFileStorage.save(data.to_csv())
             self.httpApi.post(data)
-            time.sleep(60)
+            time.sleep(1)
 
             # # 新しいファイルを作成するかどうかの判定
             # current_minute = DateUtils.now_utc().minute
