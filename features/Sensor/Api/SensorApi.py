@@ -4,6 +4,7 @@ import sys
 from Utils.DateUtils import DateUtils
 
 from features.Sensor.Entity.SensorData import SensorData
+import datetime
 
 class SensorApi:
 
@@ -49,7 +50,7 @@ class SensorApi:
             print("Data array is too short.")
             return SensorData()
 
-        time_measured = str(DateUtils.now_timestamp())
+        time_measured = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
         temperature = self.s16(int(hex(data[9]) + '{:02x}'.format(data[8], 'x'), 16)) / 100
         relative_humidity = int(hex(data[11]) + '{:02x}'.format(data[10], 'x'), 16) / 100
         ambient_light = int(hex(data[13]) + '{:02x}'.format(data[12], 'x'), 16)
