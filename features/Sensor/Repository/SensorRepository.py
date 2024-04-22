@@ -33,7 +33,8 @@ class SensorRepository:
             # TODO: area_idをセットする
             data.area_id = 1 
             self.httpApi.post(data)
-            time.sleep(1)
+            print(data)
+            time.sleep(30)
 
             # # 新しいファイルを作成するかどうかの判定
             # current_minute = DateUtils.now_utc().minute

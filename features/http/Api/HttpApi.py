@@ -5,8 +5,8 @@ from features.Sensor.Entity.SensorData import SensorData
 
 class HttpApi:
     def __init__(self):
-        # self.url = "https://sensor-api.sysken.net"
-        self.url = "http://192.168.101.65:3000"
+        self.url = "https://sensor-api.sysken.net"
+        # self.url = "http://192.168.101.65:3000"
 
     def post(self, data:SensorData) -> requests.Response:
         response = requests.post(self.url + "/set/sensor",json=data.to_json())
