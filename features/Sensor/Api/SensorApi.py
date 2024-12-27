@@ -131,12 +131,26 @@ class SensorApi:
         try:
             if self.ser.is_open:
                 # Get Latest data Long.
-                command = bytearray([0x52, 0x42, 0x05, 0x00, 0x01, 0x21, 0x50])
-                command = command + self.calc_crc(command, len(command))
-                self.ser.write(command)
-                time.sleep(0.1)
-                data = self.ser.read(self.ser.in_waiting)
-                return self.print_latest_data(data)
+                while True:
+                    command = bytearray([0x52, 0x42, 0x05, 0x00, 0x01, 0x21, 0x50])
+                    command = command + self.calc_crc(command, len(command))
+                    self.ser.write(command)
+                    time.sleep(0.5)
+                    expected_length = 56
+                    self.ser.timeout = 2  # タイムアウトを2秒に設定
+                    data = self.ser.read(expected_length)
+                    
+                    if len(data) != expected_length:
+                        print(f"Received incomplete data: {len(data)} bytes")
+                        time.sleep(3)
+                        continue
+
+                    if len(data) < 56:  # 最大のインデックス値に基づく
+                        print("Data array is too short. そのためやり直し")
+                        time.sleep(3)
+                        continue
+
+                    return self.print_latest_data(data)
             else:
                 print("Serial port is not open.")
                 return SensorData()
