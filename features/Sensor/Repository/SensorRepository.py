@@ -5,7 +5,6 @@ from Utils.DateUtils import DateUtils
 from features.Sensor.Api.SensorApi import SensorApi
 from features.Sensor.Entity.SensorData import SensorData
 from features.http.Api.HttpApi import HttpApi
-import signal
 import asyncio
 import sys
 
@@ -21,16 +20,6 @@ class SensorRepository:
         # self.csvFileStorage = csvFileStorage
         self.httpApi = httpApi
         self.new_file_created = False
-
-        # SIGTERMが起きた時に着火させる
-        signal.signal(signal.SIGTERM, self.termed)
-
-    # systemctl stop を起こした時に止める用のコード
-    async def termed(self, signum, frame):
-        await self.sensorApi.clear_led()
-
-        print("SIGTERM!")
-        sys.exit(0)
     
     async def dataUpload(self, data: SensorData) -> None:
 
@@ -54,7 +43,7 @@ class SensorRepository:
         except asyncio.CancelledError:
             await self.sensorApi.clear_led()
             print("非同期タスクがキャンセルされました。")
-            
+
         except:
             await self.sensorApi.set_led( r=255, g=0, b=255)
 
