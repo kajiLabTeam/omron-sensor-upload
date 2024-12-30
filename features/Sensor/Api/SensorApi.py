@@ -10,8 +10,9 @@ import serial_asyncio
 from serial_asyncio import SerialTransport
 
 class SerialReader(asyncio.Protocol):
-    def __init__(self):
+    def __init__(self, getSensorData: Callable[[bytes], None]):
         self.transport = None
+        self.getSensorData = getSensorData
 
     def connection_made(self, transport):
         """シリアルポート接続が確立したときに呼ばれる"""
@@ -25,6 +26,7 @@ class SerialReader(asyncio.Protocol):
     def data_received(self, data):
         """データを受信したときに呼ばれる"""
         print(f"Received response: {data.hex()}")
+        self.getSensorData(data)
 
     def connection_lost(self, exc):
         """シリアルポート接続が閉じたときに呼ばれる"""
@@ -37,16 +39,23 @@ class SensorApi:
     def __init__(self):
         self.transport: Optional[SerialTransport] = None
         self.protocol = None
+        self.httpPost = None
 
-    async def initialize(self, port: str = '/dev/ttyUSB0', baudrate: int = 115200):
+    async def initialize(
+            self, 
+            port: str = '/dev/ttyUSB0', 
+            baudrate: int = 115200,
+            httpPost: Optional[Callable[[SensorData], Coroutine[None, None, None]]] = None
+        ):
         """非同期でシリアルポートを初期化"""
         loop = asyncio.get_running_loop()
+        reader = SerialReader(self.getSensorData)
         transport, protocol = await serial_asyncio.create_serial_connection(
-            loop, SerialReader, port, baudrate=baudrate
+            loop, reader, port, baudrate=baudrate
         )
         self.transport = transport
         self.protocol = protocol
-
+        self.httpPost = httpPost
 
     # LED display rule. Normal Off.
     DISPLAY_RULE_NORMALLY_OFF = 0
@@ -148,46 +157,40 @@ class SensorApi:
         # LED On. Color of Green.
         command = bytearray([0x52, 0x42, 0x0a, 0x00, 0x02, 0x11, 0x51, self.DISPLAY_RULE_NORMALLY_ON, 0x00, r, g, b])
         command = command + self.calc_crc(command, len(command))
-        self.protocol.write(command)
+        self.transport.write(command) # type: ignore
         await asyncio.sleep(0.1)
-        self.protocol.read(self.protocol.in_waiting)
 
     async def clear_led(self) -> None:
         # LED Off.
         command = bytearray([0x52, 0x42, 0x0a, 0x00, 0x02, 0x11, 0x51, self.DISPLAY_RULE_NORMALLY_OFF, 0x00, 0, 0, 0])
         command = command + self.calc_crc(command, len(command))
-        self.protocol.write(command)
+        self.transport.write(command) # type: ignore
         await asyncio.sleep(1)
     
+    def getSensorData(self, data: bytes): 
+        if len(data) < 56:  # 最大のインデックス値に基づく
+            print("Data array is too short. そのためやり直し")
+            print(f"Received incomplete data: {len(data)} bytes")
+            return
 
-    async def get_sensor_data(self , httpPost: Callable[[SensorData], Coroutine[None, None, None]]) -> None:
+        sensor_data = self.print_latest_data(data)
+        # httpPost を非同期に実行
+        
+        print(f"{time.strftime('%X')}")
+        if self.httpPost:
+            asyncio.create_task(self.httpPost(sensor_data))
+        print(f"{time.strftime('%X')}")
+
+    async def get_sensor_data(self) -> None:
         """
         Get sensor data.
         """
         try:
-            while self.protocol.is_open:
+            while self.transport and self.transport.is_closing() is False:
                 command = bytearray([0x52, 0x42, 0x05, 0x00, 0x01, 0x21, 0x50])
                 command = command + self.calc_crc(command, len(command))
-                self.protocol.write(command)
-                await asyncio.sleep(0.5)
-                self.protocol.timeout = 2  # タイムアウトを2秒に設定
-                data = self.protocol.read(self.protocol.inWaiting()) # type: ignore
-
-                if len(data) < 56:  # 最大のインデックス値に基づく
-                    print("Data array is too short. そのためやり直し")
-                    print(f"Received incomplete data: {len(data)} bytes")
-                    await asyncio.sleep(3)
-                    continue
-
-                sensor_data = self.print_latest_data(data)
-                # httpPost を非同期に実行
-                
-                print(f"{time.strftime('%X')}")
-                asyncio.create_task(httpPost(sensor_data))
-                print(f"{time.strftime('%X')}")
-                self.protocol.flushInput() # type: ignore
-
-                await asyncio.sleep(1)
+                self.transport.write(command)
+                await asyncio.sleep(2)
             else:
                 print("Serial port is not open.")
                 return

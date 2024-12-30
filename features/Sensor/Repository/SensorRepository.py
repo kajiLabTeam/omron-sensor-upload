@@ -45,12 +45,16 @@ class SensorRepository:
 
     async def get_sensor(self) -> None:
 
-        await self.sensorApi.initialize()
+        await self.sensorApi.initialize(
+            port='/dev/ttyUSB0',
+            baudrate=115200,
+            httpPost=self.dataUpload
+        )
 
         try: 
             await self.sensorApi.set_led( r=0, g=255, b=255)
 
-            await self.sensorApi.get_sensor_data(self.dataUpload)
+            await self.sensorApi.get_sensor_data()
 
             # # 新しいファイルを作成するかどうかの判定
             # current_minute = DateUtils.now_utc().minute
