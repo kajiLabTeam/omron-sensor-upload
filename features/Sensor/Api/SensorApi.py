@@ -2,17 +2,50 @@ import serial
 import time
 import sys
 from Utils.DateUtils import DateUtils
-from typing import Callable , Coroutine
+from typing import Callable , Coroutine , Optional
 import asyncio
-
-
 from features.Sensor.Entity.SensorData import SensorData
 import datetime
+import serial_asyncio
+from serial_asyncio import SerialTransport
+
+class SerialReader(asyncio.Protocol):
+    def __init__(self):
+        self.transport = None
+
+    def connection_made(self, transport):
+        """シリアルポート接続が確立したときに呼ばれる"""
+        self.transport = transport
+        print("Serial port connected")
+        # コマンドを送信
+        command = bytearray([0x01, 0x02, 0x03, 0x04])  # サンプルコマンド
+        # self.transport.write(command)
+        print(f"Sent command: {command}")
+
+    def data_received(self, data):
+        """データを受信したときに呼ばれる"""
+        print(f"Received response: {data.hex()}")
+
+    def connection_lost(self, exc):
+        """シリアルポート接続が閉じたときに呼ばれる"""
+        print("Serial port disconnected")
+        if exc:
+            print(f"Error: {exc}")
 
 class SensorApi:
 
     def __init__(self):
-        self.ser : serial.Serial = serial.Serial("/dev/ttyUSB0", 115200, serial.EIGHTBITS, serial.PARITY_NONE)
+        self.transport: Optional[SerialTransport] = None
+        self.protocol = None
+
+    async def initialize(self, port: str = '/dev/ttyUSB0', baudrate: int = 115200):
+        """非同期でシリアルポートを初期化"""
+        loop = asyncio.get_running_loop()
+        transport, protocol = await serial_asyncio.create_serial_connection(
+            loop, SerialReader, port, baudrate=baudrate
+        )
+        self.transport = transport
+        self.protocol = protocol
 
 
     # LED display rule. Normal Off.
@@ -115,15 +148,15 @@ class SensorApi:
         # LED On. Color of Green.
         command = bytearray([0x52, 0x42, 0x0a, 0x00, 0x02, 0x11, 0x51, self.DISPLAY_RULE_NORMALLY_ON, 0x00, r, g, b])
         command = command + self.calc_crc(command, len(command))
-        self.ser.write(command)
+        self.protocol.write(command)
         await asyncio.sleep(0.1)
-        self.ser.read(self.ser.in_waiting)
+        self.protocol.read(self.protocol.in_waiting)
 
     async def clear_led(self) -> None:
         # LED Off.
         command = bytearray([0x52, 0x42, 0x0a, 0x00, 0x02, 0x11, 0x51, self.DISPLAY_RULE_NORMALLY_OFF, 0x00, 0, 0, 0])
         command = command + self.calc_crc(command, len(command))
-        self.ser.write(command)
+        self.protocol.write(command)
         await asyncio.sleep(1)
     
 
@@ -132,13 +165,13 @@ class SensorApi:
         Get sensor data.
         """
         try:
-            while self.ser.is_open:
+            while self.protocol.is_open:
                 command = bytearray([0x52, 0x42, 0x05, 0x00, 0x01, 0x21, 0x50])
                 command = command + self.calc_crc(command, len(command))
-                self.ser.write(command)
+                self.protocol.write(command)
                 await asyncio.sleep(0.5)
-                self.ser.timeout = 2  # タイムアウトを2秒に設定
-                data = self.ser.read(self.ser.inWaiting()) # type: ignore
+                self.protocol.timeout = 2  # タイムアウトを2秒に設定
+                data = self.protocol.read(self.protocol.inWaiting()) # type: ignore
 
                 if len(data) < 56:  # 最大のインデックス値に基づく
                     print("Data array is too short. そのためやり直し")
@@ -152,7 +185,7 @@ class SensorApi:
                 print(f"{time.strftime('%X')}")
                 asyncio.create_task(httpPost(sensor_data))
                 print(f"{time.strftime('%X')}")
-                self.ser.flushInput() # type: ignore
+                self.protocol.flushInput() # type: ignore
 
                 await asyncio.sleep(1)
             else:

@@ -45,6 +45,8 @@ class SensorRepository:
 
     async def get_sensor(self) -> None:
 
+        await self.sensorApi.initialize()
+
         try: 
             await self.sensorApi.set_led( r=0, g=255, b=255)
 
