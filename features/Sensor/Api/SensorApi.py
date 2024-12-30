@@ -43,7 +43,7 @@ class SensorApi:
         return (bytearray([crcL, crcH]))
 
 
-    async def print_latest_data(self,data:bytes) -> SensorData:
+    def print_latest_data(self,data:bytes) -> SensorData:
 
         """
         print measured latest value.
@@ -146,9 +146,12 @@ class SensorApi:
                     await asyncio.sleep(3)
                     continue
 
-                sensor_data = await self.print_latest_data(data)
+                sensor_data = self.print_latest_data(data)
                 # httpPost を非同期に実行
+                
+                print(f"{time.strftime('%X')}")
                 asyncio.create_task(httpPost(sensor_data))
+                print(f"{time.strftime('%X')}")
                 self.ser.flushInput() # type: ignore
 
                 await asyncio.sleep(1)

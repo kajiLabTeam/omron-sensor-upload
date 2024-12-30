@@ -38,7 +38,7 @@ class SensorRepository:
         # self.csvFileStorage.save(data.to_csv())
         # TODO: area_idをセットする
         data.area_id = 1 
-        await self.httpApi.post(data)
+        self.httpApi.post(data)
         print(data)
 
         await self.sensorApi.set_led( r=0, g=255, b=255)
