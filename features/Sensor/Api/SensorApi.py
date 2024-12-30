@@ -2,6 +2,9 @@ import serial
 import time
 import sys
 from Utils.DateUtils import DateUtils
+from typing import Callable
+import asyncio
+
 
 from features.Sensor.Entity.SensorData import SensorData
 import datetime
@@ -124,7 +127,7 @@ class SensorApi:
         time.sleep(1)
     
 
-    def get_sensor_data(self) -> SensorData:
+    def get_sensor_data(self , httpPost: Callable[[SensorData], asyncio.Future]) -> None:
         """
         Get sensor data.
         """
@@ -150,13 +153,15 @@ class SensorApi:
                         time.sleep(3)
                         continue
 
-                    return self.print_latest_data(data)
+                    asyncio.run(httpPost(self.print_latest_data(data)))
+                    
+                    time.sleep(1)
             else:
                 print("Serial port is not open.")
-                return SensorData()
+                return
 
         except KeyboardInterrupt:
-            self.clear_led()
-            # script finish.
+            raise
             sys.exit
-            return SensorData()
+
+            
