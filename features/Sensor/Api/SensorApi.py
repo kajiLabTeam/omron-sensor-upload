@@ -51,7 +51,7 @@ class SensorApi:
         loop = asyncio.get_running_loop()
         reader = SerialReader(self.getSensorData)
         transport, protocol = await serial_asyncio.create_serial_connection(
-            loop, reader, port, baudrate=baudrate
+            loop, lambda: reader, port, baudrate=baudrate
         )
         self.transport = transport
         self.protocol = protocol
