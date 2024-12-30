@@ -120,6 +120,7 @@ if __name__ == '__main__':
             tmp = ser.write(command)
             time.sleep(0.1)
             data = ser.read(ser.inWaiting())
+            print(data)
             print_latest_data(data)
             time.sleep(1)
 

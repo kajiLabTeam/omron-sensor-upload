@@ -1,5 +1,6 @@
 from features.Sensor.Repository.SensorRepository import SensorRepository
+import asyncio
 
 if __name__ == "__main__":
     sensorRepository = SensorRepository()
-    sensorRepository.get_sensor()
+    asyncio.run(sensorRepository.get_sensor())

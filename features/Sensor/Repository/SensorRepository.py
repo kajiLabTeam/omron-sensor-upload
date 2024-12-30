@@ -32,37 +32,23 @@ class SensorRepository:
         print("SIGTERM!")
         sys.exit(0)
     
-    def dataUpload(self, data: SensorData) -> None:
-        self.sensorApi.set_led(
-            r=0,
-            g=255,
-            b=0
-        )
+    async def dataUpload(self, data: SensorData) -> None:
+        self.sensorApi.set_led( r=0, g=255, b=0)
     
         # self.csvFileStorage.save(data.to_csv())
         # TODO: area_idをセットする
         data.area_id = 1 
-        print("アップロードしようとするよ")
+        result = self.httpApi.post(data)
         print(data)
 
-        asyncio.run(self.httpApi.post(data))  # 非同期にpostメソッドを呼び出す
+        self.sensorApi.set_led( r=0, g=255, b=255)
 
-        self.sensorApi.set_led(
-            r=0,
-            g=255,
-            b=255
-        )
-
-    def get_sensor(self) -> None:
+    async def get_sensor(self) -> None:
 
         try: 
-            self.sensorApi.set_led(
-                r=0,
-                g=255,
-                b=255
-            )
-            
-            self.sensorApi.get_sensor_data(self.dataUpload)
+            await self.sensorApi.set_led( r=0, g=255, b=255)
+
+            await self.sensorApi.get_sensor_data(self.dataUpload)
 
             # # 新しいファイルを作成するかどうかの判定
             # current_minute = DateUtils.now_utc().minute

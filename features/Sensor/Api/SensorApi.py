@@ -3,6 +3,7 @@ import time
 import sys
 from Utils.DateUtils import DateUtils
 from typing import Callable
+import asyncio
 
 
 from features.Sensor.Entity.SensorData import SensorData
@@ -42,7 +43,7 @@ class SensorApi:
         return (bytearray([crcL, crcH]))
 
 
-    def print_latest_data(self,data:bytes) -> SensorData:
+    async def print_latest_data(self,data:bytes) -> SensorData:
 
         """
         print measured latest value.
@@ -51,7 +52,7 @@ class SensorApi:
         if len(data) < 56:  # 最大のインデックス値に基づく
             print("Data array is too short.")
             return SensorData()
-
+        
         time_measured = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
         temperature = self.s16(int(hex(data[9]) + '{:02x}'.format(data[8], 'x'), 16)) / 100
         relative_humidity = int(hex(data[11]) + '{:02x}'.format(data[10], 'x'), 16) / 100
@@ -110,52 +111,46 @@ class SensorApi:
         )
     
 
-    def set_led(self, r:int, g:int, b:int) -> None:
+    async def set_led(self, r:int, g:int, b:int) -> None:
         # LED On. Color of Green.
         command = bytearray([0x52, 0x42, 0x0a, 0x00, 0x02, 0x11, 0x51, self.DISPLAY_RULE_NORMALLY_ON, 0x00, r, g, b])
         command = command + self.calc_crc(command, len(command))
         self.ser.write(command)
-        time.sleep(0.1)
+        asyncio.sleep(0.1)
         self.ser.read(self.ser.in_waiting)
 
-    def clear_led(self) -> None:
+    async def clear_led(self) -> None:
         # LED Off.
         command = bytearray([0x52, 0x42, 0x0a, 0x00, 0x02, 0x11, 0x51, self.DISPLAY_RULE_NORMALLY_OFF, 0x00, 0, 0, 0])
         command = command + self.calc_crc(command, len(command))
         self.ser.write(command)
-        time.sleep(1)
+        asyncio.sleep(1)
     
 
-    def get_sensor_data(self , httpPost: Callable[[SensorData],None]) -> None:
+    async def get_sensor_data(self , httpPost: Callable[[SensorData],None]) -> None:
         """
         Get sensor data.
         """
         try:
-            if self.ser.is_open:
-                # Get Latest data Long.
-                while True:
-                    command = bytearray([0x52, 0x42, 0x05, 0x00, 0x01, 0x21, 0x50])
-                    command = command + self.calc_crc(command, len(command))
-                    self.ser.write(command)
-                    time.sleep(0.5)
-                    expected_length = 56
-                    self.ser.timeout = 2  # タイムアウトを2秒に設定
-                    data = self.ser.read(expected_length)
-                    
-                    if len(data) != expected_length:
-                        print(f"Received incomplete data: {len(data)} bytes")
-                        time.sleep(3)
-                        continue
+            while self.ser.is_open:
+                command = bytearray([0x52, 0x42, 0x05, 0x00, 0x01, 0x21, 0x50])
+                command = command + self.calc_crc(command, len(command))
+                self.ser.write(command)
+                asyncio.sleep(0.5)
+                self.ser.timeout = 2  # タイムアウトを2秒に設定
+                data = self.ser.read(self.ser.inWaiting())
 
-                    if len(data) < 56:  # 最大のインデックス値に基づく
-                        print("Data array is too short. そのためやり直し")
-                        time.sleep(3)
-                        continue
+                if len(data) < 56:  # 最大のインデックス値に基づく
+                    print("Data array is too short. そのためやり直し")
+                    print(f"Received incomplete data: {len(data)} bytes")
+                    asyncio.sleep(3)
+                    continue
 
-                    # httpPost を非同期に実行
-                    httpPost(self.print_latest_data(data))
-                    
-                    time.sleep(1)
+                # httpPost を非同期に実行
+                asyncio.create_task(httpPost(self.print_latest_data(data)))
+                self.ser.flushInput()
+
+                asyncio.sleep(1)
             else:
                 print("Serial port is not open.")
                 return
