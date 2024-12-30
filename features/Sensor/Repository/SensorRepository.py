@@ -41,7 +41,7 @@ class SensorRepository:
             response = self.httpApi.post(data)
             print(data)
         except:
-            self.sensorApi.set_led( r=255, g=0, b=255)
+            await self.sensorApi.set_led( r=255, g=0, b=255)
 
     async def get_sensor(self) -> None:
 
