@@ -3,7 +3,6 @@ import time
 import sys
 from Utils.DateUtils import DateUtils
 from typing import Callable
-import asyncio
 
 
 from features.Sensor.Entity.SensorData import SensorData
@@ -127,7 +126,7 @@ class SensorApi:
         time.sleep(1)
     
 
-    def get_sensor_data(self , httpPost: Callable[[SensorData], asyncio.Future]) -> None:
+    def get_sensor_data(self , httpPost: Callable[[SensorData]]) -> None:
         """
         Get sensor data.
         """
@@ -153,7 +152,8 @@ class SensorApi:
                         time.sleep(3)
                         continue
 
-                    asyncio.run(httpPost(self.print_latest_data(data)))
+                    # httpPost を非同期に実行
+                    httpPost(self.print_latest_data(data))
                     
                     time.sleep(1)
             else:

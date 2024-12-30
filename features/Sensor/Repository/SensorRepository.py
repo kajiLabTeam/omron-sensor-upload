@@ -7,6 +7,7 @@ from features.Sensor.Entity.SensorData import SensorData
 from features.http.Api.HttpApi import HttpApi
 import signal
 import asyncio
+import sys
 
 
 class SensorRepository:
@@ -31,9 +32,7 @@ class SensorRepository:
         print("SIGTERM!")
         sys.exit(0)
     
-    async def dataUpload(self, data: SensorData) -> None:
-        
-        
+    def dataUpload(self, data: SensorData) -> None:
         self.sensorApi.set_led(
             r=0,
             g=255,
@@ -45,7 +44,8 @@ class SensorRepository:
         data.area_id = 1 
         print("アップロードしようとするよ")
         print(data)
-        self.httpApi.post(data)
+
+        asyncio.run(self.httpApi.post(data))  # 非同期にpostメソッドを呼び出す
 
         self.sensorApi.set_led(
             r=0,
@@ -61,8 +61,8 @@ class SensorRepository:
                 g=255,
                 b=255
             )
-
-            data = self.sensorApi.get_sensor_data(self.dataUpload)
+            
+            self.sensorApi.get_sensor_data(self.dataUpload)
 
             # # 新しいファイルを作成するかどうかの判定
             # current_minute = DateUtils.now_utc().minute
