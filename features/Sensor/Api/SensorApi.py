@@ -2,7 +2,7 @@ import serial
 import time
 import sys
 from Utils.DateUtils import DateUtils
-from typing import Callable
+from typing import Callable , Coroutine
 import asyncio
 
 
@@ -127,7 +127,7 @@ class SensorApi:
         await asyncio.sleep(1)
     
 
-    async def get_sensor_data(self , httpPost: Callable[[SensorData],None]) -> None:
+    async def get_sensor_data(self , httpPost: Callable[[SensorData], Coroutine[None, None, None]]) -> None:
         """
         Get sensor data.
         """
@@ -138,7 +138,7 @@ class SensorApi:
                 self.ser.write(command)
                 await asyncio.sleep(0.5)
                 self.ser.timeout = 2  # タイムアウトを2秒に設定
-                data = self.ser.read(self.ser.inWaiting())
+                data = self.ser.read(self.ser.inWaiting()) # type: ignore
 
                 if len(data) < 56:  # 最大のインデックス値に基づく
                     print("Data array is too short. そのためやり直し")
@@ -146,9 +146,10 @@ class SensorApi:
                     await asyncio.sleep(3)
                     continue
 
+                sensor_data = await self.print_latest_data(data)
                 # httpPost を非同期に実行
-                asyncio.create_task(httpPost(self.print_latest_data(data)))
-                self.ser.flushInput()
+                asyncio.create_task(httpPost(sensor_data))
+                self.ser.flushInput() # type: ignore
 
                 await asyncio.sleep(1)
             else:
