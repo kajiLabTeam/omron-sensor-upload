@@ -26,14 +26,14 @@ class SensorRepository:
         signal.signal(signal.SIGTERM, self.termed)
 
     # systemctl stop を起こした時に止める用のコード
-    def termed(self, signum, frame):
-        self.sensorApi.clear_led()
+    async def termed(self, signum, frame):
+        await self.sensorApi.clear_led()
 
         print("SIGTERM!")
         sys.exit(0)
     
     async def dataUpload(self, data: SensorData) -> None:
-        self.sensorApi.set_led( r=0, g=255, b=0)
+        await self.sensorApi.set_led( r=0, g=255, b=0)
     
         # self.csvFileStorage.save(data.to_csv())
         # TODO: area_idをセットする
@@ -41,7 +41,7 @@ class SensorRepository:
         result = self.httpApi.post(data)
         print(data)
 
-        self.sensorApi.set_led( r=0, g=255, b=255)
+        await self.sensorApi.set_led( r=0, g=255, b=255)
 
     async def get_sensor(self) -> None:
 
@@ -61,13 +61,13 @@ class SensorRepository:
             #     self.new_file_created = False
         
         except KeyboardInterrupt:
-            self.sensorApi.clear_led()
+            await self.sensorApi.clear_led()
         
         except: 
             import traceback
             traceback.print_exc()
 
-            self.sensorApi.set_led(
+            await self.sensorApi.set_led(
                 r=255,
                 g=0,
                 b=0

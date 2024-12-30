@@ -116,7 +116,7 @@ class SensorApi:
         command = bytearray([0x52, 0x42, 0x0a, 0x00, 0x02, 0x11, 0x51, self.DISPLAY_RULE_NORMALLY_ON, 0x00, r, g, b])
         command = command + self.calc_crc(command, len(command))
         self.ser.write(command)
-        asyncio.sleep(0.1)
+        await asyncio.sleep(0.1)
         self.ser.read(self.ser.in_waiting)
 
     async def clear_led(self) -> None:
@@ -124,7 +124,7 @@ class SensorApi:
         command = bytearray([0x52, 0x42, 0x0a, 0x00, 0x02, 0x11, 0x51, self.DISPLAY_RULE_NORMALLY_OFF, 0x00, 0, 0, 0])
         command = command + self.calc_crc(command, len(command))
         self.ser.write(command)
-        asyncio.sleep(1)
+        await asyncio.sleep(1)
     
 
     async def get_sensor_data(self , httpPost: Callable[[SensorData],None]) -> None:
@@ -136,21 +136,21 @@ class SensorApi:
                 command = bytearray([0x52, 0x42, 0x05, 0x00, 0x01, 0x21, 0x50])
                 command = command + self.calc_crc(command, len(command))
                 self.ser.write(command)
-                asyncio.sleep(0.5)
+                await asyncio.sleep(0.5)
                 self.ser.timeout = 2  # タイムアウトを2秒に設定
                 data = self.ser.read(self.ser.inWaiting())
 
                 if len(data) < 56:  # 最大のインデックス値に基づく
                     print("Data array is too short. そのためやり直し")
                     print(f"Received incomplete data: {len(data)} bytes")
-                    asyncio.sleep(3)
+                    await asyncio.sleep(3)
                     continue
 
                 # httpPost を非同期に実行
                 asyncio.create_task(httpPost(self.print_latest_data(data)))
                 self.ser.flushInput()
 
-                asyncio.sleep(1)
+                await asyncio.sleep(1)
             else:
                 print("Serial port is not open.")
                 return
