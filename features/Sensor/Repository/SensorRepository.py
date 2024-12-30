@@ -38,8 +38,23 @@ class SensorRepository:
             # self.csvFileStorage.save(data.to_csv())
             # TODO: area_idをセットする
             data.area_id = 1 
+
+            # 気圧が2000を越えることはあり得ないので、その時はデータ取得ミスとして何もしない
+            if data.barometric_pressure > 2000:
+                return
+
             response = self.httpApi.post(data)
+
             print(data)
+
+        except KeyboardInterrupt:
+            await self.sensorApi.clear_led()
+            print("プログラムが中断されました。")
+
+        except asyncio.CancelledError:
+            await self.sensorApi.clear_led()
+            print("非同期タスクがキャンセルされました。")
+            
         except:
             await self.sensorApi.set_led( r=255, g=0, b=255)
 
@@ -67,7 +82,12 @@ class SensorRepository:
         
         except KeyboardInterrupt:
             await self.sensorApi.clear_led()
-        
+            print("プログラムが中断されました。")
+
+        except asyncio.CancelledError:
+            await self.sensorApi.clear_led()
+            print("非同期タスクがキャンセルされました。")
+
         except: 
             import traceback
             traceback.print_exc()
