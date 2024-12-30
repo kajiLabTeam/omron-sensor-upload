@@ -33,15 +33,15 @@ class SensorRepository:
         sys.exit(0)
     
     async def dataUpload(self, data: SensorData) -> None:
-        await self.sensorApi.set_led( r=0, g=255, b=0)
-    
-        # self.csvFileStorage.save(data.to_csv())
-        # TODO: area_idをセットする
-        data.area_id = 1 
-        self.httpApi.post(data)
-        print(data)
 
-        await self.sensorApi.set_led( r=0, g=255, b=255)
+        try: 
+            # self.csvFileStorage.save(data.to_csv())
+            # TODO: area_idをセットする
+            data.area_id = 1 
+            response = self.httpApi.post(data)
+            print(data)
+        except:
+            self.sensorApi.set_led( r=255, g=0, b=255)
 
     async def get_sensor(self) -> None:
 
@@ -53,7 +53,6 @@ class SensorRepository:
 
         try: 
             await self.sensorApi.set_led( r=0, g=255, b=255)
-
             await self.sensorApi.get_sensor_data()
 
             # # 新しいファイルを作成するかどうかの判定
@@ -73,10 +72,6 @@ class SensorRepository:
             import traceback
             traceback.print_exc()
 
-            await self.sensorApi.set_led(
-                r=255,
-                g=0,
-                b=0
-            )
+            await self.sensorApi.set_led( r=255, g=0, b=0 )
             
 

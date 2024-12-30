@@ -18,14 +18,10 @@ class SerialReader(asyncio.Protocol):
         """シリアルポート接続が確立したときに呼ばれる"""
         self.transport = transport
         print("Serial port connected")
-        # コマンドを送信
-        command = bytearray([0x01, 0x02, 0x03, 0x04])  # サンプルコマンド
-        # self.transport.write(command)
-        print(f"Sent command: {command}")
 
     def data_received(self, data):
         """データを受信したときに呼ばれる"""
-        print(f"Received response: {data.hex()}")
+        # print(f"Received response: {data.hex()}")
         self.getSensorData(data)
 
     def connection_lost(self, exc):
@@ -169,17 +165,12 @@ class SensorApi:
     
     def getSensorData(self, data: bytes): 
         if len(data) < 56:  # 最大のインデックス値に基づく
-            print("Data array is too short. そのためやり直し")
-            print(f"Received incomplete data: {len(data)} bytes")
+            # print(f"Data array is too short. Received incomplete data: {len(data)} bytes")
             return
 
         sensor_data = self.print_latest_data(data)
-        # httpPost を非同期に実行
-        
-        print(f"{time.strftime('%X')}")
         if self.httpPost:
             asyncio.create_task(self.httpPost(sensor_data))
-        print(f"{time.strftime('%X')}")
 
     async def get_sensor_data(self) -> None:
         """
@@ -190,7 +181,7 @@ class SensorApi:
                 command = bytearray([0x52, 0x42, 0x05, 0x00, 0x01, 0x21, 0x50])
                 command = command + self.calc_crc(command, len(command))
                 self.transport.write(command)
-                await asyncio.sleep(2)
+                await asyncio.sleep(1)
             else:
                 print("Serial port is not open.")
                 return
