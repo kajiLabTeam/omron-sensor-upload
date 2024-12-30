@@ -126,7 +126,7 @@ class SensorApi:
         time.sleep(1)
     
 
-    def get_sensor_data(self , httpPost: Callable[[SensorData]]) -> None:
+    def get_sensor_data(self , httpPost: Callable[[SensorData],None]) -> None:
         """
         Get sensor data.
         """
